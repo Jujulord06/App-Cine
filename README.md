@@ -12,7 +12,18 @@ Aucune installation : ouvrez `index.html` dans un navigateur, ou servez le dossi
 python3 -m http.server 8000   # puis http://localhost:8000
 ```
 
-(Le site peut aussi être publié tel quel avec GitHub Pages.)
+### Mettre le jeu en ligne (gratuit, sans compte pour les joueurs)
+
+Le dossier est un site statique prêt pour **GitHub Pages** :
+
+1. *Settings → General → Danger Zone → Change visibility → Public*
+   (GitHub Pages est gratuit pour les dépôts publics).
+2. *Settings → Pages → Build and deployment* : Source **Deploy from a branch**,
+   branche `claude/nice-fermat-8k1vzu`, dossier `/ (root)`, puis **Save**.
+3. Après une minute, le jeu est en ligne sur <https://jujulord06.github.io/App-Cine/>.
+
+Sur iPhone : ouvrir le lien dans Safari, bouton Partager, **« Sur l'écran d'accueil »** :
+le jeu s'installe avec son icône et s'ouvre en plein écran, comme une appli.
 
 - 10 films par partie, avec ou sans chrono (15 s par film).
 - 3 programmations : *Têtes d'affiche* (≥ 20 000 votes), *Grand public* (≥ 5 000), *Intégrale*.
