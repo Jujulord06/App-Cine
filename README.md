@@ -41,3 +41,15 @@ python3 scripts/build_data.py                 # options : --min-votes 1000 --max
 ```
 
 Données IMDb utilisées à titre personnel et non commercial, conformément à leurs conditions.
+
+## Version autonome (affiches incluses)
+
+Certains hébergements (comme les pages claude.ai) bloquent les images venant d'autres sites.
+`scripts/build_web.py` produit dans `dist/` une version qui embarque les 6 411 affiches,
+regroupées en 163 planches JPEG de 40 affiches (≈ 110 Mo au total, 3 ou 4 planches,
+soit ≈ 2 Mo, téléchargées par partie) :
+
+```bash
+pip install pillow
+python3 scripts/build_web.py
+```

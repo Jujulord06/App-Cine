@@ -24,11 +24,32 @@
     set(k, v) { try { localStorage.setItem("navet." + k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } },
   };
 
-  const FILMS = window.FILMS || [];
+  // Version de base : window.FILMS (data/films.js), affiches chargées depuis IMDb.
+  // Version autonome (scripts/build_web.py) : films.json + planches d'affiches locales.
+  let FILMS = window.FILMS || [];
+  let SHEET = null;
   const settings = Object.assign({ timer: "off", pool: "all" }, store.get("settings", {}));
   const game = { films: [], round: 0, score: 0, results: [], locked: false, timerId: null, deadline: 0, lastSecond: null };
 
-  const poster = (key, size) => "https://m.media-amazon.com/images/M/" + key + "._V1_QL80_" + size + "_.jpg";
+  const imdbPoster = (key, size) => "https://m.media-amazon.com/images/M/" + key + "._V1_QL80_" + size + "_.jpg";
+
+  // Applique l'affiche du film en fond de l'élément et renvoie l'URL de l'image à charger
+  function paintPoster(el, f, size) {
+    if (SHEET && f.s !== undefined) {
+      const url = "posters/p" + String(f.s).padStart(3, "0") + ".jpg";
+      const col = f.c % SHEET.cols, row = Math.floor(f.c / SHEET.cols);
+      el.style.backgroundImage = "url(" + url + ")";
+      el.style.backgroundSize = SHEET.cols * 100 + "% " + SHEET.rows * 100 + "%";
+      el.style.backgroundPosition = (col / (SHEET.cols - 1)) * 100 + "% " + (row / (SHEET.rows - 1)) * 100 + "%";
+      return url;
+    }
+    const url = imdbPoster(f.p, size);
+    el.style.backgroundImage = "url(" + url + ")";
+    return url;
+  }
+  function posterSrc(f) {
+    return SHEET && f.s !== undefined ? "posters/p" + String(f.s).padStart(3, "0") + ".jpg" : imdbPoster(f.p, "UX500");
+  }
   const fmt = (n) => n.toFixed(1);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const sfx = (name, ...a) => window.CineAudio && window.CineAudio.play(name, ...a);
@@ -107,17 +128,35 @@
     const last = new Set(store.get("last", []));
     let candidates = pool.filter((f) => !last.has(f.i));
     if (candidates.length < ROUNDS) candidates = pool.slice();
-    for (let i = candidates.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+    shuffle(candidates);
+    let picked = candidates.slice(0, ROUNDS);
+    if (SHEET) {
+      // Avec les planches, on pioche au plus 4 films par planche : 3 à 4 images à télécharger par partie
+      const bySheet = new Map();
+      candidates.forEach((f) => { if (!bySheet.has(f.s)) bySheet.set(f.s, []); bySheet.get(f.s).push(f); });
+      picked = [];
+      for (const films of shuffle([...bySheet.values()])) {
+        picked.push(...films.slice(0, Math.min(4, ROUNDS - picked.length)));
+        if (picked.length === ROUNDS) break;
+      }
+      if (picked.length < ROUNDS) picked = candidates.slice(0, ROUNDS);
+      shuffle(picked);
     }
-    const picked = candidates.slice(0, ROUNDS);
     // Les films de cette partie ne pourront pas revenir dans la partie suivante
     store.set("last", picked.map((f) => f.i));
     return picked;
   }
 
+  function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
   async function startGame() {
+    if (!FILMS.length) return;
     sfx("click");
     Object.assign(game, { films: pickFilms(), round: 0, score: 0, results: [], locked: true });
     $("hud-score").textContent = "0";
@@ -130,7 +169,7 @@
   /* ---------- Manche ---------- */
   function loadPoster(f) {
     const img = new Image();
-    img.src = poster(f.p, "UX500");
+    img.src = posterSrc(f);
     return img;
   }
 
@@ -156,10 +195,11 @@
     img.classList.remove("loaded");
     fb.classList.remove("show");
     fb.textContent = f.t;
-    img.alt = "Affiche du film " + f.t;
-    img.onload = () => img.classList.add("loaded");
-    img.onerror = () => fb.classList.add("show");
-    img.src = poster(f.p, "UX500");
+    img.setAttribute("aria-label", "Affiche du film " + f.t);
+    const loader = new Image();
+    loader.onload = () => { if (game.films[game.round] === f) img.classList.add("loaded"); };
+    loader.onerror = () => { if (game.films[game.round] === f) fb.classList.add("show"); };
+    loader.src = paintPoster(img, f, "UX500");
 
     const frame = $("poster-frame");
     frame.classList.remove("in"); void frame.offsetWidth; frame.classList.add("in");
@@ -342,8 +382,9 @@
     game.results.forEach(({ f, guess, points }, i) => {
       const li = document.createElement("li");
       li.style.animationDelay = i * 60 + "ms";
-      const img = document.createElement("img");
-      img.src = poster(f.p, "UX80"); img.alt = ""; img.loading = "lazy";
+      const img = document.createElement("div");
+      img.className = "r-img";
+      paintPoster(img, f, "UX80");
       const t = document.createElement("div"); t.className = "r-title";
       t.textContent = f.t;
       const small = document.createElement("small"); small.textContent = f.y || ""; t.append(small);
@@ -414,5 +455,18 @@
 
   /* ---------- Démarrage ---------- */
   renderMenu();
+  if (window.FILMS_URL) {
+    $("btn-start").disabled = true;
+    $("pool-hint").textContent = "Chargement du catalogue…";
+    fetch(window.FILMS_URL)
+      .then((r) => r.json())
+      .then((d) => {
+        FILMS = d.films;
+        SHEET = { cols: d.cols, rows: d.rows };
+        $("btn-start").disabled = false;
+        renderMenu();
+      })
+      .catch(() => { $("pool-hint").textContent = "Impossible de charger les films. Rechargez la page."; });
+  }
   setTimeout(() => document.body.classList.remove("curtains-closed"), 400);
 })();
