@@ -2,166 +2,181 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Navet d'Or</title>
-  <meta name="description" content="Devinez la note IMDb des films les plus mal notés d'Hollywood… et d'ailleurs.">
+  <meta name="description" content="Devinez la note des films les plus mal notés du cinéma : IMDb, Metacritic, Rotten Tomatoes.">
   <meta name="referrer" content="no-referrer">
-  <meta name="theme-color" content="#3d0207">
+  <meta name="theme-color" content="#07070a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Navet d'Or">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Limelight&family=Oswald:wght@400;600&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500..800;1,6..96,500..800&family=Archivo:wdth,wght@62..125,400..700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://m.media-amazon.com">
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="curtains-closed">
-  <div class="spotlights" aria-hidden="true"><span></span><span></span></div>
+<body>
+  <!-- Ambiance : halo de l'affiche, faisceau du projecteur, poussière, grain -->
+  <div class="ambient" id="ambient" aria-hidden="true"></div>
+  <div class="beam" aria-hidden="true"></div>
+  <canvas class="dust" id="dust" aria-hidden="true"></canvas>
   <div class="grain" aria-hidden="true"></div>
+  <div class="shutter" id="shutter" aria-hidden="true"><i></i></div>
 
-  <!-- Rideaux de théâtre -->
-  <div class="curtain curtain-left" aria-hidden="true"></div>
-  <div class="curtain curtain-right" aria-hidden="true"></div>
-  <div class="valance" aria-hidden="true"></div>
-
-  <div class="audio-controls">
-    <button id="btn-music" class="icon-btn" title="Musique (M)" aria-pressed="true">♫</button>
-    <button id="btn-sfx" class="icon-btn" title="Effets sonores (S)" aria-pressed="true">🔊</button>
+  <div class="sound">
+    <button id="btn-music" class="icon-btn" title="Musique (M)" aria-label="Musique" aria-pressed="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
+    </button>
+    <button id="btn-sfx" class="icon-btn" title="Effets sonores (S)" aria-label="Effets sonores" aria-pressed="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="wave" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+    </button>
   </div>
 
   <main id="app">
-    <!-- MENU -->
+    <!-- HALL -->
     <section id="screen-menu" class="screen active">
-      <div class="marquee">
-        <div class="bulbs" aria-hidden="true"></div>
-        <p class="marquee-top">Ce soir, à l'affiche</p>
-        <h1 class="logo">Navet <span>d'Or</span></h1>
-        <p class="marquee-sub">Devinez la note IMDb des pires films du box-office</p>
-      </div>
+      <div class="carousel" id="carousel" aria-hidden="true"><div class="ring" id="ring"></div></div>
 
-      <div class="panel menu-panel">
-        <p class="pitch">10 films. Tous notés <strong>5/10 ou moins</strong> sur IMDb.<br>
-          À vous de deviner leur note exacte, entre <strong>0</strong> et <strong>5</strong>.</p>
+      <header class="hero">
+        <p class="eyebrow">Ce soir en avant-première</p>
+        <h1 class="logo">Navet <em>d'Or</em></h1>
+        <p class="tagline">Devinez la note des pires films du cinéma.<br>Tous notés <b>4,8 sur 10</b> ou moins.</p>
+      </header>
 
+      <div class="setup">
         <div class="option">
-          <span class="option-label">Chronomètre</span>
-          <div class="seg" role="radiogroup" data-option="timer">
-            <button role="radio" data-value="off">Sans chrono</button>
+          <span class="option-label">Chrono</span>
+          <div class="seg" role="radiogroup" aria-label="Chrono" data-option="timer">
+            <button role="radio" data-value="off">Sans</button>
             <button role="radio" data-value="on">15 s par film</button>
           </div>
         </div>
-
         <div class="option">
-          <span class="option-label">Programmation</span>
-          <div class="seg" role="radiogroup" data-option="pool">
-            <button role="radio" data-value="stars">Têtes d'affiche</button>
-            <button role="radio" data-value="public">Grand public</button>
-            <button role="radio" data-value="all">Intégrale</button>
+          <span class="option-label">Programme</span>
+          <div class="seg" role="radiogroup" aria-label="Programme" data-option="pool">
+            <button role="radio" data-value="stars">Célèbres</button>
+            <button role="radio" data-value="public">Connus</button>
+            <button role="radio" data-value="all">Tout</button>
           </div>
-          <span class="option-hint" id="pool-hint"></span>
         </div>
+        <p class="option-hint" id="pool-hint">&nbsp;</p>
 
-        <button id="btn-start" class="btn-gold big">Lever de rideau</button>
+        <button id="btn-start" class="btn-primary">
+          <span>Entrer dans la salle</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
         <p class="best" id="best-score"></p>
-        <button id="btn-rules" class="btn-link">Comment on joue ?</button>
+        <button id="btn-rules" class="btn-ghost">Règles du jeu</button>
       </div>
     </section>
 
-    <!-- JEU -->
+    <!-- SÉANCE -->
     <section id="screen-game" class="screen">
       <header class="hud">
-        <div class="hud-item"><span class="hud-label">Bobine</span><span class="hud-value" id="hud-round">1/10</span></div>
-        <div class="hud-item timer-wrap" id="timer-wrap">
-          <svg viewBox="0 0 44 44" class="timer-ring"><circle cx="22" cy="22" r="19" class="ring-bg"/><circle cx="22" cy="22" r="19" class="ring-fg" id="timer-ring"/></svg>
-          <span id="timer-text">15</span>
-        </div>
-        <div class="hud-item"><span class="hud-label">Score</span><span class="hud-value" id="hud-score">0</span></div>
+        <div class="hud-round"><span id="hud-round">01</span><small>/10</small></div>
+        <ol class="reels" id="reels" aria-hidden="true"></ol>
+        <div class="hud-score"><span id="hud-score">0</span><small>pts</small></div>
+        <div class="timebar" id="timebar" hidden><b><i id="timebar-fill"></i></b><span id="timer-text">15 s</span></div>
       </header>
 
-      <div class="stage">
-        <div class="poster-frame" id="poster-frame">
-          <div class="poster-inner">
-            <div id="poster" class="poster-img" role="img"></div>
-            <div class="poster-fallback" id="poster-fallback"></div>
+      <div class="stage" id="stage">
+        <div class="poster-wrap">
+          <div class="poster3d" id="poster3d">
+            <div class="poster" id="poster" role="img">
+              <div class="poster-fallback" id="poster-fallback"></div>
+              <div class="sheen" aria-hidden="true"></div>
+            </div>
+            <div class="seal" id="seal" hidden>
+              <div class="seal-face">
+                <span class="seal-src" id="seal-src">IMDb</span>
+                <span class="seal-value" id="real-value">0.0</span>
+                <span class="seal-max">/10</span>
+              </div>
+            </div>
           </div>
-          <div class="clap" id="clap" aria-hidden="true"><div class="clap-top"></div><div class="clap-body">PRISE <b id="clap-n">1</b></div></div>
+          <div class="floor" aria-hidden="true"></div>
         </div>
 
-        <div class="side">
+        <div class="panel">
           <div class="film-info">
+            <p class="source-chip" id="source-chip"><b>IMDb</b> note du public</p>
             <h2 id="film-title">—</h2>
             <p id="film-meta"></p>
           </div>
 
           <div class="guess" id="guess-zone">
-            <div class="stars" id="stars" aria-hidden="true">
-              <span class="stars-bg">★★★★★</span><span class="stars-fg" id="stars-fg">★★★★★</span>
+            <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Votre note" aria-valuemin="0" aria-valuemax="4.8" aria-valuenow="2.4">
+              <div class="dial-value"><output id="guess-value">2.4</output></div>
+              <div class="tape" id="tape"></div>
+              <i class="needle" aria-hidden="true"></i>
             </div>
-            <output id="guess-value" class="guess-value">2.5</output>
-            <input type="range" id="guess" min="0" max="5" step="0.1" value="2.5" aria-label="Votre estimation de la note IMDb">
-            <div class="scale" id="scale">
-              <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
-            </div>
-            <div class="nudges">
-              <button class="nudge" data-d="-0.1" aria-label="Moins 0,1">−</button>
-              <button id="btn-validate" class="btn-gold">Verdict !</button>
-              <button class="nudge" data-d="0.1" aria-label="Plus 0,1">+</button>
+            <div class="actions">
+              <button class="nudge" data-d="-0.1" aria-label="Baisser de 0,1">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg>
+              </button>
+              <button id="btn-validate" class="btn-primary">Verdict</button>
+              <button class="nudge" data-d="0.1" aria-label="Monter de 0,1">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg>
+              </button>
             </div>
           </div>
 
           <div class="result" id="result" hidden>
-            <p class="result-label">Note IMDb</p>
-            <p class="result-real"><span id="real-value">0.0</span><small>/10</small></p>
-            <div class="cmp" id="cmp" aria-hidden="true">
-              <div class="cmp-track"><i class="cmp-guess" id="cmp-guess"><em>Vous</em></i><i class="cmp-real" id="cmp-real"><em>IMDb</em></i></div>
-              <div class="cmp-scale"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+            <div class="result-top">
+              <p class="verdict" id="verdict"></p>
+              <p class="points" id="points"></p>
             </div>
-            <p class="result-verdict" id="verdict"></p>
-            <p class="result-points" id="points"></p>
-            <p class="result-votes" id="votes"></p>
-            <button id="btn-next" class="btn-gold">Film suivant</button>
+            <div class="cmp" aria-hidden="true">
+              <div class="cmp-track">
+                <i class="cmp-gap" id="cmp-gap"></i>
+                <i class="cmp-dot cmp-guess" id="cmp-guess"><em>vous <span id="cmp-guess-v"></span></em></i>
+                <i class="cmp-dot cmp-real" id="cmp-real"><em id="cmp-real-l">IMDb</em></i>
+              </div>
+            </div>
+            <div class="result-bottom">
+              <p class="votes" id="votes"></p>
+              <button id="btn-next" class="btn-primary">Film suivant</button>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- FIN -->
+    <!-- GÉNÉRIQUE -->
     <section id="screen-end" class="screen">
-      <div class="marquee small">
-        <div class="bulbs" aria-hidden="true"></div>
-        <p class="marquee-top">Générique de fin</p>
-        <h2 class="logo"><span id="final-score">0</span></h2>
-        <p class="marquee-sub" id="final-max"></p>
-      </div>
-      <div class="panel">
-        <div class="award" id="award"></div>
+      <header class="final">
+        <p class="eyebrow">Générique de fin</p>
+        <div class="final-score"><span id="final-score">0</span><small id="final-max">/ 10 000</small></div>
+        <h2 class="award-title" id="award-title"></h2>
+        <p class="award-text" id="award-text"></p>
         <p class="best" id="end-best"></p>
-        <ol class="recap" id="recap"></ol>
-        <div class="end-actions">
-          <button id="btn-again" class="btn-gold big">Nouvelle séance</button>
-          <button id="btn-menu" class="btn-link">Retour au hall</button>
-        </div>
+      </header>
+      <ol class="recap" id="recap"></ol>
+      <div class="end-actions">
+        <button id="btn-again" class="btn-primary">Nouvelle séance</button>
+        <button id="btn-menu" class="btn-ghost">Retour au hall</button>
       </div>
     </section>
   </main>
 
   <dialog id="rules">
-    <h3>Le règlement du plateau</h3>
+    <h3>Règles du jeu</h3>
     <ul>
-      <li>Chaque partie projette <b>10 films</b> notés <b>5/10 ou moins</b> sur IMDb.</li>
-      <li>Réglez le curseur sur la note que vous imaginez (de 0 à 5, au dixième près), puis criez <b>« Verdict ! »</b>.</li>
-      <li>Jusqu'à <b>1 000 points</b> par film : on perd 50 points par dixième d'écart (0 point à 2 étoiles d'écart).</li>
-      <li>Avec chrono : <b>15 secondes</b> par film. Bonus de rapidité jusqu'à <b>+200</b> si vous êtes à moins d'1 point de la vraie note. Temps écoulé = « Coupez ! », 0 point.</li>
-      <li>Clavier : <kbd>←</kbd> <kbd>→</kbd> pour régler, <kbd>Entrée</kbd> pour valider, <kbd>M</kbd> musique, <kbd>S</kbd> effets.</li>
-      <li>Les films d'une partie ne reviennent pas dans la partie suivante.</li>
+      <li>Une séance, c'est <b>10 films</b>, tous notés <b>4,8 sur 10</b> ou moins.</li>
+      <li>Chaque film affiche la source de sa note : <b>IMDb</b> (le public), <b>Metacritic</b> (la presse, ramenée sur 10) ou <b>Rotten Tomatoes</b> (moyenne des critiques).</li>
+      <li>Faites glisser la molette, ou utilisez <b>−</b> et <b>+</b>, pour régler votre note entre 0 et 4,8, puis validez avec <b>Verdict</b>.</li>
+      <li>Jusqu'à <b>1 000 points</b> par film. Chaque dixième d'écart coûte 50 points.</li>
+      <li>Avec le chrono, vous avez <b>15 secondes</b> par film, et jusqu'à <b>+200</b> points de bonus si vous êtes à moins d'1 point de la bonne note. Temps écoulé : 0 point.</li>
+      <li>Les films d'une séance ne reviennent pas à la séance suivante.</li>
+      <li>Au clavier : <kbd>←</kbd> <kbd>→</kbd> pour régler, <kbd>Entrée</kbd> pour valider, <kbd>M</kbd> pour la musique, <kbd>S</kbd> pour les effets.</li>
     </ul>
-    <p class="credits">Notes et affiches : IMDb. Cinéma chinois et indien exclus.</p>
-    <form method="dialog"><button class="btn-gold">Action !</button></form>
+    <p class="credits">Notes : IMDb, Metacritic et Rotten Tomatoes (via Wikidata). Affiches : IMDb. Cinéma chinois et indien exclus.</p>
+    <form method="dialog"><button class="btn-primary">Compris</button></form>
   </dialog>
 
   <script src="data/films.js"></script>

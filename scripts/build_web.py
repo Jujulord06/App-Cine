@@ -136,7 +136,7 @@ def main():
                         img.paste(cover(im), ((n % COLS) * CELL_W, (n // COLS) * CELL_H))
                 except Exception as e:
                     log("Affiche illisible", f["i"], e)
-                out.append({k: f[k] for k in ("i", "t", "y", "g", "r", "v")} | {"s": sheet, "c": n})
+                out.append({k: f[k] for k in ("i", "t", "y", "g", "r", "v", "src") if k in f} | {"s": sheet, "c": n})
             img.save(os.path.join(args.out, "posters", "p%03d.jpg" % sheet), quality=66, optimize=True, progressive=True)
             sheet += 1
         log("Programmation %s : %d films" % (tier, len(group)))
